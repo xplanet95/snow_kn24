@@ -18,7 +18,7 @@ def date_group(i):
         return f'{day} {month}'
 
 def d_1_group(i):
-    g = r.findall(r'1\d{4}', i)
+    g = r.findall(r'1\d\d[\d/][\d/]', i)
     if g == []:  # продумать если возврат больше одной группы за раз
         return ''
     else:
