@@ -63,7 +63,7 @@ def d_4_group(i):
         return f'Высота снега (лес): {h_snow}, см'
 
 def d_5_group(i):
-    g = r.findall(r'5\d{4}', i)
+    g = r.findall(r'5\d\d[\d/][\d/]', i)
     if g == []:  # продумать если возврат больше одной группы за раз
         return ''
     else:
