@@ -104,3 +104,5 @@ if __name__ == '__main__':
                 d_4 = d_4_group(code)
                 d_5 = d_5_group(code)
                 res.write(f'{decode_name(i)} {date_group(i)} {d_1}; {d_2}; {d_3_group(d_1, d_2)} {d_4}; {d_5}; {d_6_group(d_4, d_5)} ({i})' + '\n')
+
+# some change
