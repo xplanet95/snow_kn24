@@ -13,7 +13,6 @@ logging.basicConfig(  # для ведения логов (оф. документ
 
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-# CHAT_ID = os.getenv('CHAT_ID')
 
 updater = tg.ext.Updater(token=TELEGRAM_TOKEN, use_context=True)
 dispatcher = updater.dispatcher
@@ -21,10 +20,6 @@ dispatcher = updater.dispatcher
 
 def start(update: tg.Update, context: tg.ext.CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id, text="Введите код КН-24")
-
-
-# def echo(update: tg.Update, context: tg.ext.CallbackContext):
-#     context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
 
 
 def decode_station(i):  #проверяем наличие станции в базе данных
@@ -37,7 +32,7 @@ def decode_station(i):  #проверяем наличие станции в б�
 
 def date_group(i):
     code = i.split()[1]
-    if not code.isdigit():  # продумать если возврат больше одной группы за раз
+    if not code.isdigit() or len(code) != 5:  # продумать если возврат больше одной группы за раз
         return f'<ошибка в группе дат ({code})>'
     else:
         day = int(code[0]+code[1])
@@ -67,23 +62,16 @@ def d_2_and_5_group(i):
         av_dens = int(g_dec[1] + g_dec[2]) / 100
         return f'Средняя плотность: {av_dens}, г/см3'
 
+
 def d_3_and_6_group(d_1, d_2):
-    for i in d_1.split():
-        if not i.endswith(','):
-            continue
-        else:
-            h = int(i[0:-1])
-            for j in d_2.split():
-                if not j.endswith(','):
-                    continue
-                else:
-                    d = float(j[0:-1]) * 100
-                    H = round(h * d * 10 / 100)
-                    return f'Запас: {H}, мм'
-                    break
-                break
-            break
-        break
+    h = r.findall(r'\d+', d_1)
+    p = r.findall(r'\d+\.\d+', d_2)
+    if h and p:
+        d = float(p[0]) * 100
+        H = round(int(h[0]) * d * 10 / 100)
+        return f'Запас: {H}, мм'
+    else:
+        return ''
 
 
 def encoder(data):
@@ -92,13 +80,18 @@ def encoder(data):
         code = ' '.join(i.split()[2:])
         d_1 = d_1_and_4_group(code)
         d_2 = d_2_and_5_group(code)
-        result += f'{decode_station(i)} {date_group(i)} ' \
-                  f'{d_1}; {d_2}; {d_3_and_6_group(d_1, d_2)}\n\n'
+        result += f'{decode_station(i)} {date_group(i)}' \
+                  f'\n{d_1};  {d_2};  {d_3_and_6_group(d_1, d_2)}'
+        if len(i.split()) > 5:
+            code = ' '.join(i.split()[5:])
+            d_4 = d_1_and_4_group(code)
+            d_5 = d_2_and_5_group(code)
+            result += f'\n{d_4};  {d_5};  {d_3_and_6_group(d_4, d_5)}'
+        result += f'\n({i})\n\n'
     return result
 
 
 def check_data(update: tg.Update, context: tg.ext.CallbackContext):
-    # data = ' '.join(context.args).strip().split()
     data = [i for i in update.message.text.split('\n')]  # сгенерели словарь строк
     checked_code = [i[0:-1] for i in list(filter(lambda i: i.endswith('='), data))]
     # получили проверенные нужные данные, оканч-ся на =
