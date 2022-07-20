@@ -15,6 +15,7 @@ logging.basicConfig(  # для ведения логов (оф. документ
 
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+button_help = "Справка"
 
 updater = tg.ext.Updater(token=TELEGRAM_TOKEN, use_context=True)
 dispatcher = updater.dispatcher
@@ -93,16 +94,38 @@ def encoder(data):
     return result
 
 
+def button_help_handler(update: tg.Update, context: tg.ext.CallbackContext):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Код должен состоять из цифр длинной 5 символов, "
+                                                                    "разделенных пробелом и оканчиваться на знак =. "
+                                                                    "Пример \"11111 22222 33333 44444 55555=\"",
+                             reply_markup=tg.ReplyKeyboardRemove())
+
+
 def check_data(update: tg.Update, context: tg.ext.CallbackContext):
-    data = [i for i in update.message.text.split('\n')]  # сгенерели словарь строк
-    checked_code = [i[0:-1] for i in list(filter(lambda i: i.endswith('='), data))]
-    # получили проверенные нужные данные, оканч-ся на =
-    if not checked_code:
-        message = '<нет удовлетворяющих условиям данных, подробнее в "справка">'
-        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    if update.message.text == 'Справка':
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="Код должен состоять из цифр длинной 5 символов, "
+                                      "разделенных пробелом и оканчиваться на знак =. "
+                                      "Пример \"11111 22222 33333 44444 55555=\"",
+                                 reply_markup=tg.ReplyKeyboardRemove())
     else:
-        message = encoder(checked_code)
-        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+        data = [i for i in update.message.text.split('\n')]  # сгенерели словарь строк
+        checked_code = [i[0:-1] for i in list(filter(lambda i: i.endswith('='), data))]
+        # получили проверенные нужные данные, оканч-ся на =
+        if not checked_code:
+            message = '<нет удовлетворяющих условиям данных, подробнее в "справка">'
+            reply_markup = tg.ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        tg.KeyboardButton(text=button_help)
+                    ],
+                ],
+                resize_keyboard=True
+            )
+            context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=reply_markup)
+        else:
+            message = encoder(checked_code)
+            context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 check_data_handler = tg.ext.MessageHandler(tg.ext.Filters.text & (~tg.ext.Filters.command), check_data)
