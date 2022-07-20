@@ -3,6 +3,8 @@ import telegram as tg
 import telegram.ext
 import os
 import re as r
+import time
+import requests
 from dotenv import load_dotenv
 from gauges import gauges_db
 
@@ -22,7 +24,7 @@ def start(update: tg.Update, context: tg.ext.CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id, text="Введите код КН-24")
 
 
-def decode_station(i):  #проверяем наличие станции в базе данных
+def decode_station(i):  # проверяем наличие станции в базе данных
     code = i.split()[0]
     if code in gauges_db.keys():
         return f'{gauges_db[code]}'
@@ -106,7 +108,24 @@ def check_data(update: tg.Update, context: tg.ext.CallbackContext):
 check_data_handler = tg.ext.MessageHandler(tg.ext.Filters.text & (~tg.ext.Filters.command), check_data)
 dispatcher.add_handler(check_data_handler)
 
-
 start_handler = tg.ext.CommandHandler('start', start)
 dispatcher.add_handler(start_handler)
-updater.start_polling()
+
+
+def main():
+    updater.start_polling()
+    while True:
+        try:
+            url = 'https://www.cbr.ru/scripts/XML_daily.asp'
+            response = requests.get(url)
+            print(response.text)
+            time.sleep(1740)  # опрашивать раз в пять минут
+
+        except Exception as e:
+            print(f'Бот упал с ошибкой: {e}')
+            time.sleep(5)
+            continue
+
+
+if __name__ == '__main__':
+    main()
