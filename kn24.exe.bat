@@ -10,6 +10,5 @@ IF EXIST %~dp0venv (
     pip install -r requirements.txt
 )
 
+echo BOT GOTOV K RABOTE
 py main.py
-
-:echoColor %start_green% Бот готов к работе, при завершении закройте командную строку
